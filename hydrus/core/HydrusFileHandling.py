@@ -1,5 +1,7 @@
 import hashlib
 import os
+from pathlib import Path
+import subprocess
 
 from hydrus.core import HydrusAudioHandling
 from hydrus.core import HydrusConstants as HC
@@ -59,7 +61,33 @@ def GenerateThumbnailBytes( path, target_resolution, mime, duration, num_frames,
     if mime in ( HC.IMAGE_JPEG, HC.IMAGE_PNG, HC.IMAGE_GIF, HC.IMAGE_WEBP, HC.IMAGE_TIFF, HC.IMAGE_ICON ): # not apng atm
         
         thumbnail_bytes = HydrusImageHandling.GenerateThumbnailBytesFromStaticImagePath( path, target_resolution, mime )
-        
+    elif mime in [HC.APPLICATION_ZIP]:
+        temp_dir_path = HydrusPaths.GetTempDir()
+        try:
+            cmd = ["unzip", path, '-d', temp_dir_path]
+            subprocess.call(cmd)
+            cover = sorted(
+                list(Path(temp_dir_path).rglob("*.jpg")) +
+                list(Path(temp_dir_path).rglob("*.png"))
+            , key=lambda p: p.name)[0].as_posix()
+            thumbnail_bytes = HydrusImageHandling.GenerateThumbnailBytesFromStaticImagePath( cover, target_resolution, mime )
+        except Exception as e:
+            thumb_path = os.path.join( HC.STATIC_DIR, 'zip.png' )
+            thumbnail_bytes = HydrusImageHandling.GenerateThumbnailBytesFromStaticImagePath( thumb_path, target_resolution, mime )
+    elif mime in [HC.APPLICATION_RAR]:
+        temp_dir_path = HydrusPaths.GetTempDir()
+        try:
+            cmd = ["unrar", 'x', path, temp_dir_path]
+            subprocess.call(cmd)
+            cover = sorted(
+                list(Path(temp_dir_path).rglob("*.jpg")) +
+                list(Path(temp_dir_path).rglob("*.png"))
+            , key=lambda p: p.name)[0].as_posix()
+            thumbnail_bytes = HydrusImageHandling.GenerateThumbnailBytesFromStaticImagePath( cover, target_resolution, mime )
+        except Exception as e:
+            thumb_path = os.path.join( HC.STATIC_DIR, 'rar.png' )
+            thumbnail_bytes = HydrusImageHandling.GenerateThumbnailBytesFromStaticImagePath( thumb_path, target_resolution, mime )
+
     else:
         
         if mime == HC.APPLICATION_FLASH:
@@ -171,9 +199,32 @@ def GetFileInfo( path, mime = None, ok_to_look_for_hydrus_updates = False ):
     num_words = None
     
     if mime in ( HC.IMAGE_JPEG, HC.IMAGE_PNG, HC.IMAGE_GIF, HC.IMAGE_WEBP, HC.IMAGE_TIFF, HC.IMAGE_ICON ):
-        
         ( ( width, height ), duration, num_frames ) = HydrusImageHandling.GetImageProperties( path, mime )
-        
+    elif mime == HC.APPLICATION_ZIP:
+        temp_dir_path = HydrusPaths.GetTempDir()
+        try:
+            subprocess.call(["unzip", path, '-d', temp_dir_path])
+            cover = sorted(
+                list(Path(temp_dir_path).rglob("*.jpg")) +
+                list(Path(temp_dir_path).rglob("*.png"))
+            , key=lambda p: p.name)[0].as_posix()
+            ( (width, height) , duration, num_frames ) = HydrusImageHandling.GetImageProperties( cover, HC.IMAGE_PNG )
+            # TODO: delete dir
+        except Exception as e:
+            ( width, height , duration, num_frames ) = (300, 300, 0, 0)
+    elif mime == HC.APPLICATION_RAR:
+        temp_dir_path = HydrusPaths.GetTempDir()
+        try:
+            subprocess.call(["unrar", path, temp_dir_path])
+            cover = sorted(
+                list(Path(temp_dir_path).rglob("*.jpg")) +
+                list(Path(temp_dir_path).rglob("*.png"))
+            , key=lambda p: p.name)[0].as_posix()
+            ( (width, height) , duration, num_frames ) = HydrusImageHandling.GetImageProperties( cover, HC.IMAGE_PNG )
+        except Exception as e:
+            ( width, height , duration, num_frames ) = (300, 300, 0, 0)
+
+
     elif mime == HC.APPLICATION_FLASH:
         
         ( ( width, height ), duration, num_frames ) = HydrusFlashHandling.GetFlashProperties( path )

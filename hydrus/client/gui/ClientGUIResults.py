@@ -4936,7 +4936,11 @@ class Thumbnail( Selectable ):
         # top left icons
         
         icons_to_draw = []
-        
+
+        if self.GetMime() in [HC.APPLICATION_ZIP, HC.APPLICATION_RAR]:
+
+            icons_to_draw.append( CC.global_pixmaps().zipicon )
+
         if self.HasAudio():
             
             icons_to_draw.append( CC.global_pixmaps().sound )

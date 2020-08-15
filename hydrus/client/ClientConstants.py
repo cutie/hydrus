@@ -469,6 +469,7 @@ class GlobalPixmaps( object ):
         self.collection = QG.QPixmap( os.path.join( HC.STATIC_DIR, 'collection.png' ) )
         self.inbox = QG.QPixmap( os.path.join( HC.STATIC_DIR, 'inbox.png' ) )
         self.trash = QG.QPixmap( os.path.join( HC.STATIC_DIR, 'trash.png' ) )
+        self.zipicon = QG.QPixmap( os.path.join( HC.STATIC_DIR, 'zipicon.png' ) )
         
         self.refresh = QG.QPixmap( os.path.join( HC.STATIC_DIR, 'refresh.png' ) )
         self.archive = QG.QPixmap( os.path.join( HC.STATIC_DIR, 'archive.png' ) )
